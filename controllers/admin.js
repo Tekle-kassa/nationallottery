@@ -103,6 +103,20 @@ module.exports.getVendors = async (req, res) => {
     return res.status(404).json("no records");
   }
 };
+module.exports.searchVendor = async (req, res) => {
+  try {
+    const { name, phoneNumber } = req.params;
+    const query = {};
+    if (name) {
+      query.name = name;
+    }
+    if (phoneNumber) {
+      query.phoneNumber = phoneNumber;
+    }
+    const vendor = await Vendor.find(query);
+    res.status(200).json({ vendor });
+  } catch (error) {}
+};
 module.exports.activateVendor = async (req, res) => {
   try {
     const { id } = req.body;
