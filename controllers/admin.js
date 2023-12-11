@@ -111,7 +111,8 @@ module.exports.activateVendor = async (req, res) => {
       return res.status(404).json({ message: "vendor not found" });
     }
     vendor.status = "active";
-    res.status(200).json({ message: "vendor activated" });
+    const saved = await vendor.save();
+    res.status(200).json({ message: "vendor activated", vendor: saved });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
@@ -124,7 +125,9 @@ module.exports.suspendVendor = async (req, res) => {
       return res.status(404).json({ message: "vendor not found" });
     }
     vendor.status = "suspended";
-    res.status(200).json({ message: "vendor disabled" });
+    // await vendor.save();
+    const saved = await vendor.save();
+    res.status(200).json({ message: "vendor disabled", vendor: saved });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
