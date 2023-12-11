@@ -105,17 +105,32 @@ module.exports.getVendors = async (req, res) => {
 };
 module.exports.searchVendor = async (req, res) => {
   try {
-    const { name, phoneNumber } = req.params;
-    const query = {};
-    if (name) {
-      query.name = name;
-    }
-    if (phoneNumber) {
-      query.phoneNumber = phoneNumber;
-    }
-    const vendor = await Vendor.find(query);
+    const { query } = req.query;
+    const regexQuery = new RegExp(query, "i");
+
+    const vendor = await Vendor.aggregate([
+      {
+        $match: {
+          $or: [
+            { name: { $regex: regexQuery } },
+            { phoneNumber: { $regex: regexQuery } },
+          ],
+        },
+      },
+    ]);
+    // const query = {};
+    // if (name) {
+    //   query.name = name;
+    // }
+    // if (phoneNumber) {
+    //   query.phoneNumber = phoneNumber;
+    // }
+    console.log(vendor);
     res.status(200).json({ vendor });
-  } catch (error) {}
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 module.exports.activateVendor = async (req, res) => {
   try {
