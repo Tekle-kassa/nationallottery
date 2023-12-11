@@ -107,7 +107,6 @@ module.exports.sellTicket = async (req, res) => {
     }
     const count = selectedTickets.length;
     let maxAvailableTickets = 5;
-    // const lottery = await Lottery.findById({ lotteryId });
     if (lottery.name === "Medebegna") {
       maxAvailableTickets = 2;
     }
@@ -116,7 +115,15 @@ module.exports.sellTicket = async (req, res) => {
         .status(400)
         .json({ error: "Ticket not available for selection" });
     }
+    const seller = await Vendor.findById(req.user._id);
+    if (seller.balance < lottery.price) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
 
+    seller.balance -= lottery.price;
+
+    seller.commission += 1;
+    await seller.save();
     const user = await User.findOne({ phoneNumber });
     if (!user) {
       user = new User({
@@ -134,6 +141,8 @@ module.exports.sellTicket = async (req, res) => {
       vendor: req.user._id,
     });
     await selectedTicket.save();
+    seller.ticketsSold.push(selectedTicket._id);
+    await seller.save();
     user.ticketsBought.push(selectedTicket._id);
     await user.save();
     // if (count + 1 >= maxAvailableTickets) {
@@ -141,15 +150,6 @@ module.exports.sellTicket = async (req, res) => {
     // }
     // selectedTicket.vendor = req.user._id;
     // await selectedTicket.save();
-    const seller = await Vendor.findById(req.user._id);
-    if (seller.balance < lottery.price) {
-      return res.status(400).json({ error: "Insufficient balance" });
-    }
-    seller.ticketsSold.push(selectedTicket._id);
-    seller.balance -= lottery.price;
-
-    seller.commission += 1;
-    await seller.save();
     // console.log(seller);
     res.status(200).json({
       message: "Ticket sold successfully",
