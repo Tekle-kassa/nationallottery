@@ -9,9 +9,11 @@ const {
   activateVendor,
   suspendVendor,
   registerVendor,
+  searchVendor,
 } = require("../controllers/admin");
 
 router.post("/addLottery", addLotteryInfo);
+router.get("/search", searchVendor);
 router.get("/lotteries", getLotteries);
 router.post("/addVendor", registerVendor);
 router.get("/vendors", getVendors);
