@@ -125,7 +125,7 @@ module.exports.searchVendor = async (req, res) => {
     // if (phoneNumber) {
     //   query.phoneNumber = phoneNumber;
     // }
-    console.log(vendor);
+    // console.log(vendor);
     res.status(200).json({ vendor });
   } catch (error) {
     console.log(error);
