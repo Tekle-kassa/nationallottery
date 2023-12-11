@@ -1,6 +1,6 @@
 const express = require("express");
 const dotenv = require("dotenv").config();
-const connectdb = require("./config/db");
+const connectdb = require("../config/db");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const app = express();
@@ -10,10 +10,10 @@ app.use(express.json());
 app.use(bodyParser.json());
 connectdb();
 
-const adminRoute = require("./routes/admin");
-const userRoute = require("./routes/user");
-const payRoute = require("./routes/pay");
-const vendorRoute = require("./routes/vendor");
+const adminRoute = require("../routes/admin");
+const userRoute = require("../routes/user");
+const payRoute = require("../routes/pay");
+const vendorRoute = require("../routes/vendor");
 
 app.use("/api/admin", adminRoute);
 app.use("/api/user", userRoute);
