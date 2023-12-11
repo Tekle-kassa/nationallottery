@@ -5,7 +5,7 @@ const phoneNumberFormatter = require("../middlewares/phoneNumberFormatter");
 const Ticket = require("../models/ticket");
 const Lottery = require("../models/lottery");
 const Prize = require("../models/prize");
-const Otp = require("../models/Otp");
+const Otp = require("../models/otp");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
