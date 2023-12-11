@@ -22,4 +22,4 @@ app.use("/api/vendor", vendorRoute);
 
 app.get("/", (req, res) => res.send("Bini is misogynistic Asshole!"));
 
-app.listen(port, () => console.log(`app is running on port ${port}!`));
+app.listen();
