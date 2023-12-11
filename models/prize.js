@@ -10,6 +10,9 @@ amountSchema = new Schema({
     type: String,
     required: true,
   },
+  winners: {
+    type: Number,
+  },
 });
 
 const prizeSchema = new Schema({
