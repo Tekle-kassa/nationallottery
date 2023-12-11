@@ -39,7 +39,7 @@ lotterySchema = new Schema({
   },
   digit: {
     type: Number,
-    required: true,
+    // required: true,
   },
   rule: {
     type: String,
