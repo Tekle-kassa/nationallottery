@@ -61,6 +61,57 @@ module.exports.getLotteries = async (req, res) => {
     return res.status(404).json("no records");
   }
 };
+module.exports.getLotteryById = async (req, res) => {
+  try {
+    const { id } = req.body;
+    const lottery = await Lottery.findById(id);
+    if (!lottery) {
+      res.status(404).json({ message: "lottery not found" });
+    }
+    res.status(200).json(lottery);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+module.exports.updateLottery = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, startDate, drawDate, status, prize, price, digit, rule } =
+      req.body;
+    const lottery = await Lottery.findById(id);
+    if (!lottery) {
+      res.status(404).json({ message: "lottery not found" });
+    }
+    if (name) {
+      lottery.name = name;
+    }
+    if (startDate) {
+      lottery.startDate = startDate;
+    }
+    if (drawDate) {
+      lottery.drawDate = drawDate;
+    }
+    if (status) {
+      lottery.status = status;
+    }
+    if (prize) {
+      lottery.prize = prize;
+    }
+    if (price) {
+      lottery.price = price;
+    }
+    if (digit) {
+      lottery.digit = digit;
+    }
+    if (rule) {
+      lottery.rule = rule;
+    }
+    await lottery.save();
+    res.status(200).json({ message: "Lottery updated successfully", lottery });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
 module.exports.registerVendor = async (req, res) => {
   try {
     const { name, phoneNumber, password } = req.body;
@@ -113,7 +164,7 @@ module.exports.searchVendor = async (req, res) => {
         $match: {
           $or: [
             { name: { $regex: regexQuery } },
-            { phoneNumber: { $regex: regexQuery } },
+            { phoneNumber: { $regex: regexQuery.toString() } },
           ],
         },
       },
