@@ -165,8 +165,8 @@ module.exports.updateLottery = async (req, res) => {
     const { id } = req.params;
     const { name, startDate, drawDate, status, prize, price, digit, rule } =
       req.body;
-    const lottery = await Lottery.findById(id);
-    console.log(lottery);
+    const lottery = await Lottery.findById(id).populate("prize");
+    // console.log(lottery);
     if (!lottery) {
       return res.status(404).json({ message: "lottery not found" });
     }
@@ -183,7 +183,7 @@ module.exports.updateLottery = async (req, res) => {
       lottery.status = status;
     }
     if (prize) {
-      lottery.prize = prize;
+      lottery.prize.prize = prize;
     }
     if (price) {
       lottery.price = price;
@@ -197,6 +197,7 @@ module.exports.updateLottery = async (req, res) => {
     await lottery.save();
     res.status(200).json({ message: "Lottery updated successfully", lottery });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
