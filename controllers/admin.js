@@ -82,6 +82,7 @@ module.exports.loginAdmin = async (req, res) => {
       secure: true,
     });
     res.status(200).json({
+      _id: admin._id,
       phoneNumber: formatedPhoneNumber,
       token,
     });
