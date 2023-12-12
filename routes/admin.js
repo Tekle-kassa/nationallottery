@@ -17,7 +17,7 @@ router.post("/addLottery", addLotteryInfo);
 router.get("/search", searchVendor);
 router.get("/lotteries", getLotteries);
 router.post("/lottery", getLotteryById);
-router.put("/updatelottery/:id");
+router.put("/updateLottery/:id");
 router.post("/addVendor", registerVendor);
 router.get("/vendors", getVendors);
 router.put("/activateVendor", activateVendor);
