@@ -165,37 +165,42 @@ module.exports.updateLottery = async (req, res) => {
     const { id } = req.params;
     const { name, startDate, drawDate, status, prize, price, digit, rule } =
       req.body;
-    const lottery = await Lottery.findById(id).populate("prize");
+    const lotterytoBeUpdated = await Lottery.findById(id).populate("prize");
     // console.log(lottery);
-    if (!lottery) {
+    if (!lotterytoBeUpdated) {
       return res.status(404).json({ message: "lottery not found" });
     }
     if (name) {
-      lottery.name = name;
+      lotterytoBeUpdated.name = name;
     }
     if (startDate) {
-      lottery.startDate = startDate;
+      lotterytoBeUpdated.startDate = startDate;
     }
     if (drawDate) {
-      lottery.drawDate = drawDate;
+      lotterytoBeUpdated.drawDate = drawDate;
     }
     if (status) {
-      lottery.status = status;
+      lotterytoBeUpdated.status = status;
     }
     if (prize) {
-      lottery.prize.prize = prize;
+      lotterytoBeUpdated.prize.prize = prize;
+      const p = await Prize.findById(lotterytoBeUpdated.prize);
+      p.prize = prize;
+      await p.save();
     }
     if (price) {
-      lottery.price = price;
+      lotterytoBeUpdated.price = price;
     }
     if (digit) {
-      lottery.digit = digit;
+      lotterytoBeUpdated.digit = digit;
     }
     if (rule) {
-      lottery.rule = rule;
+      lotterytoBeUpdated.rule = rule;
     }
-    await lottery.save();
-    res.status(200).json({ message: "Lottery updated successfully", lottery });
+    const updatedLottery = await lotterytoBeUpdated.save();
+    res
+      .status(200)
+      .json({ message: "Lottery updated successfully", updatedLottery });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Internal server error" });
