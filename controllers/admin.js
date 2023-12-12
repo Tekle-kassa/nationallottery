@@ -132,8 +132,8 @@ module.exports.addLotteryInfo = async (req, res) => {
     await saveLottery.save();
     res.status(201).json(saveLottery);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    // console.error(error);
+    res.status(500).json({ message: "Internal Server Error", error });
   }
 };
 
@@ -145,7 +145,7 @@ module.exports.getLotteries = async (req, res) => {
     }
   } catch (error) {
     // console.log(error);
-    return res.status(404).json("no records");
+    return res.status(404).json({ message: "no records", error });
   }
 };
 module.exports.getLotteryById = async (req, res) => {
@@ -157,7 +157,7 @@ module.exports.getLotteryById = async (req, res) => {
     }
     res.status(200).json(lottery);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.updateLottery = async (req, res) => {
@@ -203,7 +203,7 @@ module.exports.updateLottery = async (req, res) => {
       .json({ message: "Lottery updated successfully", updatedLottery });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.registerVendor = async (req, res) => {
@@ -234,7 +234,7 @@ module.exports.registerVendor = async (req, res) => {
     });
   } catch (error) {
     // console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.getVendors = async (req, res) => {
@@ -245,7 +245,7 @@ module.exports.getVendors = async (req, res) => {
     }
   } catch (error) {
     console.log(error);
-    return res.status(404).json("no records");
+    return res.status(404).json({ message: "no records", error });
   }
 };
 module.exports.searchVendor = async (req, res) => {
@@ -274,7 +274,7 @@ module.exports.searchVendor = async (req, res) => {
     res.status(200).json({ vendor });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.activateVendor = async (req, res) => {
@@ -288,7 +288,7 @@ module.exports.activateVendor = async (req, res) => {
     const saved = await vendor.save();
     res.status(200).json({ message: "vendor activated", vendor: saved });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.suspendVendor = async (req, res) => {
@@ -303,7 +303,7 @@ module.exports.suspendVendor = async (req, res) => {
     const saved = await vendor.save();
     res.status(200).json({ message: "vendor disabled", vendor: saved });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.getActiveVendors = async (req, res) => {
@@ -311,7 +311,7 @@ module.exports.getActiveVendors = async (req, res) => {
     const activeVendors = await Vendor.find({ status: "active" });
     res.json(activeVendors);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
 module.exports.getSuspendedVendors = async (req, res) => {
@@ -319,6 +319,6 @@ module.exports.getSuspendedVendors = async (req, res) => {
     const suspendedVendors = await Vendor.find({ status: "suspended" });
     res.json(suspendedVendors);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error });
   }
 };
