@@ -151,7 +151,7 @@ module.exports.getLotteries = async (req, res) => {
 module.exports.getLotteryById = async (req, res) => {
   try {
     const { id } = req.body;
-    const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id).populate("prize");
     if (!lottery) {
       return res.status(404).json({ message: "lottery not found" });
     }
@@ -165,7 +165,8 @@ module.exports.updateLottery = async (req, res) => {
     const { id } = req.params;
     const { name, startDate, drawDate, status, prize, price, digit, rule } =
       req.body;
-    const lottery = await Lottery.findById(id).populate("prize");
+    const lottery = await Lottery.findById(id);
+    console.log(lottery);
     if (!lottery) {
       return res.status(404).json({ message: "lottery not found" });
     }
