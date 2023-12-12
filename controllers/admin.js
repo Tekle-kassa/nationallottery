@@ -2,7 +2,93 @@ const Admin = require("../models/admin");
 const Lottery = require("../models/lottery");
 const Prize = require("../models/prize");
 const Vendor = require("../models/vendor");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const phoneNumberFormatter = require("../middlewares/phoneNumberFormatter");
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+};
+const isValidPhoneNumber = (phoneNumber) => {
+  const phoneRegex =
+    /(^\+\s*2\s*5\s*1\s*(9|7)\s*(([0-9]\s*){8}\s*)$)|(^0\s*(9|7)\s*(([0-9]\s*){8})$)/;
+  return phoneRegex.test(phoneNumber);
+};
+module.exports.registerAdmin = async (req, res) => {
+  const { phoneNumber, password } = req.body;
+  try {
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
+    if (!formatedPhoneNumber || !password) {
+      res.status(400);
+      throw new Error("please fill all the required fields");
+    }
+    const adminExists = await Admin.findOne({
+      phoneNumber: formatedPhoneNumber,
+    });
+    if (adminExists) {
+      res.status(400);
+      throw new Error("phone number has already been used");
+    }
+    const admin = new Admin({
+      phoneNumber: formatedPhoneNumber,
+      password,
+    });
+    await admin.save();
+    const token = generateToken(admin._id);
+    res.cookie("token", token, {
+      path: "/",
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 86400),
+      sameSite: "none",
+      secure: true,
+    });
+    res.status(201).json({
+      _id: admin._id,
+      phoneNumber: formatedPhoneNumber,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+module.exports.loginAdmin = async (req, res) => {
+  const { phoneNumber, password } = req.body;
+  try {
+    if (!phoneNumber || !password) {
+      res.status(400);
+      throw new Error("please provide phoneNumber and password");
+    }
+    if (!isValidPhoneNumber(phoneNumber)) {
+      res.status(400);
+      throw new Error("please provide a valid phone number");
+    }
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
+    const admin = await Admin.findOne({ phoneNumber: formatedPhoneNumber });
+    if (!admin) {
+      res.status(400);
+      throw new Error("Invalid phone number or password");
+    }
+    const passwordIsCorrect = await bcrypt.compare(password, admin.password);
+    if (!passwordIsCorrect) {
+      return res
+        .status(400)
+        .json({ message: "Invalid phone number or password" });
+    }
+    const token = generateToken(admin._id);
+    res.cookie("token", token, {
+      path: "/",
+      httpOnly: true,
+      expires: new Date(Date.now() + 86400 * 30),
+      sameSite: "none",
+      secure: true,
+    });
+    res.status(200).json({
+      phoneNumber: formatedPhoneNumber,
+      token,
+    });
+  } catch (error) {
+    res.status(500).json({ error });
+  }
+};
 
 module.exports.addLotteryInfo = async (req, res) => {
   try {

@@ -11,13 +11,18 @@ const {
   registerVendor,
   searchVendor,
   getLotteryById,
+  registerAdmin,
+  loginAdmin,
+  updateLottery,
 } = require("../controllers/admin");
 
+router.post("/register", registerAdmin);
+router.post("/login", loginAdmin);
 router.post("/addLottery", addLotteryInfo);
 router.get("/search", searchVendor);
 router.get("/lotteries", getLotteries);
 router.post("/lottery", getLotteryById);
-router.put("/updateLottery/:id");
+router.put("/updateLottery/:id", updateLottery);
 router.post("/addVendor", registerVendor);
 router.get("/vendors", getVendors);
 router.put("/activateVendor", activateVendor);
