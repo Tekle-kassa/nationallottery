@@ -26,6 +26,7 @@ ticketSchema = new Schema({
   },
   isAvailable: {
     type: Boolean,
+    default: true,
     // required: true,
   },
   vendor: {

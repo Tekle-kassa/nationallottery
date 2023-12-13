@@ -184,7 +184,8 @@ module.exports.updateLottery = async (req, res) => {
     }
     if (prize) {
       lotterytoBeUpdated.prize.prize = prize;
-      const p = await Prize.findById(lotterytoBeUpdated.prize);
+      // console.log(lotterytoBeUpdated.prize);
+      const p = await Prize.findById(lotterytoBeUpdated.prize._id);
       p.prize = prize;
       await p.save();
     }

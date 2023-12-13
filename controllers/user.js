@@ -6,6 +6,8 @@ const Ticket = require("../models/ticket");
 const Lottery = require("../models/lottery");
 const Prize = require("../models/prize");
 const Otp = require("../models/otp");
+const Chapa = require("chapa");
+let myChapa = new Chapa("CHASECK_TEST-7mSnUUlCknqZrInKDc9QusA7zy7KNONq");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
@@ -82,10 +84,10 @@ module.exports.sendOtp = async (req, res, next) => {
   }
 };
 module.exports.registerUser = async (req, res) => {
-  const { name, phoneNumber, password, otp } = req.body;
+  const { name, phoneNumber, password } = req.body;
   try {
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
-    if (!formatedPhoneNumber || !password || !name || !otp) {
+    if (!formatedPhoneNumber || !password || !name) {
       res.status(400);
       throw new Error("please fill all the required fields");
     }
@@ -94,23 +96,23 @@ module.exports.registerUser = async (req, res) => {
       res.status(400);
       throw new Error("phone number has already been used");
     }
-    const otpIsCorrect = await Otp.findOne({ verificationCode: otp });
-    if (!otpIsCorrect) {
-      return res.status(401).json({ message: "Invalid OTP" });
-    }
-    await Otp.deleteOne({ verificationCode: otp });
+    // const otpIsCorrect = await Otp.findOne({ verificationCode: otp });
+    // if (!otpIsCorrect) {
+    //   return res.status(401).json({ message: "Invalid OTP" });
+    // }
+    // await Otp.deleteOne({ verificationCode: otp });
     const user = new User({
       name,
       phoneNumber: formatedPhoneNumber,
       password,
     });
-    console.log(user);
+
     await user.save();
     const token = generateToken(user._id);
     res.cookie("token", token, {
       path: "/",
       httpOnly: true,
-      expires: new Date(Date.now() + 1000 * 86400),
+      expires: new Date(Date.now() + 1000 * 86400 * 30),
       sameSite: "none",
       secure: true,
     });
@@ -125,15 +127,17 @@ module.exports.registerUser = async (req, res) => {
 };
 
 module.exports.loginUser = async (req, res) => {
-  const { phoneNumber, password } = req.body;
   try {
+    const { phoneNumber, password } = req.body;
     if (!phoneNumber || !password) {
-      res.status(400);
-      throw new Error("please provide phoneNumber and password");
+      return res
+        .status(400)
+        .json({ message: "please provide phone number and password" });
     }
     if (!isValidPhoneNumber(phoneNumber)) {
-      res.status(400);
-      throw new Error("please provide a valid phone number");
+      return res
+        .status(400)
+        .json({ message: "please provide a valid phone number" });
     }
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
     const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
@@ -160,7 +164,7 @@ module.exports.loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ error });
+    res.status(500).json(error);
   }
 };
 
@@ -176,67 +180,145 @@ module.exports.logoutUser = async (req, res, next) => {
     message: "successfully logged out",
   });
 };
+module.exports.getUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "user not found " });
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json(error);
+  }
+};
+module.exports.deposit = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    // console.log(req.body.amount);
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const userInfo = {
+      amount: amount,
+      currency: "ETB",
+      email: "kassateklee@gmail.com",
+      first_name: user._id,
+      last_name: "kassa",
+      // phone_number: `${user.phoneNumber}`,
+      tx_ref: `lotto${Date.now()}`,
+      callback_url: "  https://17be-196-188-78-148.ngrok.io",
+      return_url: "http://localhost:3000/",
+      customization: {
+        title: "deposit",
+        description: "deposit for purchasing lotteries",
+      },
+    };
+    const response = await myChapa.initialize(userInfo, { autoRef: true });
+    // user.balance += parseInt(amount);
+    // await user.save();
+    res.json({
+      // message: "Deposit successful",
+      response,
+      // balance: user.balance,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+module.exports.verify = async (req, res) => {
+  try {
+    const txRef = req.params.tx_ref;
+    const response = await myChapa.verify(txRef);
 
+    if (response.status === "success") {
+      const { amount, first_name } = response.data;
+      const user = await User.findById(first_name);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      user.balance += parseInt(amount);
+      await user.save();
+
+      console.log("Payment verification successful");
+      res.json({
+        message: "Payment verification successful",
+        user: { balance: user.balance },
+      });
+    } else {
+      console.log("Payment verification failed");
+      res.status(400).json(response);
+    }
+  } catch (error) {
+    console.error("Error during payment verification:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 module.exports.selectTicket = async (req, res) => {
   try {
-    console.log("success");
-    const { lotteryId, ticketNumber } = req.body;
-    const user = await User.findById(req.user_.id);
+    const { lotteryId, ticketNumber, quantity } = req.body;
+    const user = await User.findById(req.user._id);
     const lottery = await Lottery.findById(lotteryId);
-    const ticket = await Ticket.findById(ticketNumber);
 
-    if (!user || user.balance < lottery.price) {
-      res.status(400);
-      throw new Error("user does not exist or not enough balance");
+    if (!user) {
+      return res.status(404).json({ message: "user not found" });
     }
-    // const { number, lotteryId, email } = req.body;
+    if (!quantity || quantity <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Please provide a valid quantity" });
+    }
+
+    if (user.balance < lottery.price * quantity) {
+      return res.status(400).json({
+        message: "insufficient fund please deposit to buy this lottery",
+        user,
+      });
+    }
     const selectedTickets = await Ticket.find({
       number: ticketNumber,
       lottery: lotteryId,
     });
-
-    // let index = "";
-    // for (let i = 0; i < email.length; i++) {
-    //   if (email[i] === "@") {
-    //     break;
-    //   }
-    //   index += email[i];
-    // }
-
     const count = selectedTickets.length;
     let maxAvailableTickets = 5;
-    // const lottery = await Lottery.findById({ lotteryId });
-    // if (lottery.name === "Medebegna") {
-    //   maxAvailableTickets = 2;
-    // }
+    if (lottery.name === "Medebegna") {
+      maxAvailableTickets = 2;
+    }
     if (count >= maxAvailableTickets) {
       return res
         .status(400)
         .json({ error: "Ticket not available for selection" });
     }
-
-    // const selectedTicket = selectedTickets[selectedTickets.length - 1];
-    const selectedTicket = new Ticket({
-      number: ticketNumber,
-      lottery: lotteryId,
-      user: user._id,
-      purchaseDate: Date.now(),
-    });
-
-    user.balance -= lottery.price;
-    user.ticketsBought = ticket._id;
-
-    await user.save();
-
-    if (count + 1 >= maxAvailableTickets) {
-      selectedTicket.isAvailable = false;
+    if (maxAvailableTickets - count < quantity) {
+      return res.status(400).json({
+        message: "Not enough available tickets for the requested quantity",
+        available: maxAvailableTickets - count,
+      });
     }
-    await selectedTicket.save();
+    const newTickets = [];
+    for (let i = 0; i < quantity; i++) {
+      const newTicket = new Ticket({
+        number: ticketNumber,
+        lottery: lotteryId,
+        user: user._id,
+        purchaseDate: Date.now(),
+        isAvailable: false,
+      });
+      newTickets.push(newTicket);
+      user.ticketsBought.push(newTicket._id);
+    }
+    user.balance -= lottery.price * quantity;
+    await Ticket.insertMany(newTickets);
+    await user.save();
     res
       .status(200)
-      .json({ message: "Ticket selected successfully", selectedTicket });
+      .json({ message: "Ticket selected successfully", newTickets, user });
   } catch (error) {
-    res.status(500).json({ error });
+    console.log(error);
+    res.status(500).json({ error: error.message });
   }
 };
 

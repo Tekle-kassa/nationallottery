@@ -79,19 +79,18 @@ module.exports.customerBalance = async (req, res) => {
     if (vendor) {
       id = vendor._id;
     }
-
     if (userExist) {
-      phoneNumber = userExist.phoneNumber;
+      // phoneNumber = userExist.phoneNumber;
 
-      const user = await User.findOne({ phoneNumber });
-      if (!user) {
-        user = new User({
-          phoneNumber,
-        });
+      // const user = await User.findOne({ phoneNumber });
+      // if (!user) {
+      //   user = new User({
+      //     phoneNumber,
+      //   });
 
-        await user.save();
-      }
-      id = user_id;
+      //   await user.save();
+      // }
+      id = userExist._id;
     }
     const customerInfo = {
       amount: amount,
@@ -122,7 +121,7 @@ module.exports.addBalance = async (req, res) => {
   try {
     const { first_name, phone_number, amount } = req.body;
 
-    const user = await User.findById({ first_name });
+    const user = await User.findById({ phone_number });
     const vendor = await Vendor.findById({ first_name });
     if (user) {
       user.balance += amount;
