@@ -315,7 +315,10 @@ module.exports.getUser = async (req, res) => {
 module.exports.deposit = async (req, res) => {
   try {
     const { amount } = req.body;
-    const CALLBACK_URL = "http://localhost:3000/api/user/verify";
+    // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
+    const CALLBACK_URL =
+      " https://b322-196-188-78-148.ngrok.io/api/user/verify";
+
     const RETURN_URL = `http://localhost:3000`;
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
     // console.log(req.body.amount);
@@ -367,6 +370,7 @@ module.exports.verify = async (req, res) => {
       }
 
       user.balance += parseInt(amount);
+      console.log(user);
       await user.save();
 
       console.log("Payment verification successful");
@@ -418,16 +422,25 @@ module.exports.getMyLotteries = async (req, res) => {
       path: "ticketsBought",
       populate: { path: "lottery" },
     });
+
     if (!user) {
       return res.status(400).json({ message: "user not found" });
     }
-    const ticketsToSend = user.ticketsBought.map((ticket) => {
-      return {
-        ticketNumber: ticket.number,
-        lotteryName: ticket.lottery.name,
-      };
+    const lotteriesMap = new Map();
+    user.ticketsBought.forEach((ticket) => {
+      const lotteryName = ticket.lottery.name;
+
+      if (!lotteriesMap.has(lotteryName)) {
+        lotteriesMap.set(lotteryName, []);
+      }
+
+      lotteriesMap.get(lotteryName).push(ticket.number.toString());
     });
-    res.json(ticketsToSend);
+    const lotteriesToSend = [];
+    for (const [lotteryName, tickets] of lotteriesMap) {
+      lotteriesToSend.push({ name: lotteryName, Tickets: tickets });
+    }
+    res.json(lotteriesToSend);
   } catch (error) {
     res
       .status(400)

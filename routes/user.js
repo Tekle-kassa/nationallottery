@@ -30,7 +30,7 @@ router.get("/lottery/:id", protect, getSpecificLottery);
 router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);
-router.post("/verify", protect, verify);
+router.post("/verify", verify);
 // router.get("/success", success);
 router.post("/sendOtp", sendOtp);
 router.post("/buy", protect, selectTicket);
