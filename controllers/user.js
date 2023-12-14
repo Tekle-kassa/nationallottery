@@ -18,41 +18,28 @@ const isValidPhoneNumber = (phoneNumber) => {
     /(^\+\s*2\s*5\s*1\s*(9|7)\s*(([0-9]\s*){8}\s*)$)|(^0\s*(9|7)\s*(([0-9]\s*){8})$)/;
   return phoneRegex.test(phoneNumber);
 };
-const sendMessage = async (phoneNumber) => {
-  const server = "https://sms.yegara.com/api2/send";
-  const username = "biqiltuvas";
-  const password = ";g77qYVu!t3Nb;Mz[U3";
-  const verificationCode = Math.floor(1000 + Math.random() * 9000);
-  const postData = {
-    to: phoneNumber,
-    message: verificationCode.toString(), // Convert to string for sending as message
-    template_id: "otp",
-    password,
-    username,
-  };
+async function sendMessage(phoneNumber) {
   try {
-    const fetchModule = await import("node-fetch");
-    const fetch = fetchModule.default;
-    const response = await fetch(server, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(postData),
-    });
-    // const responseText = await response.text();
-    if (response.ok) {
-      return { success: true, verificationCode: verificationCode.toString() };
-    } else {
-      return { success: false };
-    }
+    const geezSMSConfig = {
+      token: "s6Et6bByZckTc0Z00FCV5SO9L44DyHRi",
+    };
+
+    const config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `https://api.geezsms.com/api/v1/sms/otp?token=${geezSMSConfig.token}&phone=${phoneNumber}`,
+      headers: {},
+    };
+
+    const response = await axios(config);
+    return response.data;
   } catch (error) {
-    console.error("Fetch error:", error);
-    return { success: false };
+    console.error(error);
+    throw new Error(error.message);
   }
-};
+}
 module.exports.sendOtp = async (req, res, next) => {
-  const { phoneNumber } = req.body;
+  const { phoneNumber } = req.query;
   if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
     return res
       .status(400)
@@ -68,9 +55,9 @@ module.exports.sendOtp = async (req, res, next) => {
       .json({ message: "Phone number has already been used" });
   }
   const otpSent = await sendMessage(formatedPhoneNumber);
-  if (otpSent.success) {
-    const { verificationCode } = otpSent;
-    const otp = new Otp({ verificationCode });
+  if (!otpSent.error) {
+    const { code } = otpSent;
+    const otp = new Otp({ verificationCode: code });
     await otp.save();
     return res.status(200).json({
       success: true,
@@ -85,11 +72,13 @@ module.exports.sendOtp = async (req, res, next) => {
   }
 };
 module.exports.registerUser = async (req, res) => {
-  const { name, phoneNumber, password } = req.body;
+  const { name, phoneNumber, password, otp } = req.body;
   try {
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
-    if (!formatedPhoneNumber || !password || !name) {
-      res.status(400).json({ message: "please fill all the required fields" });
+    if (!formatedPhoneNumber || !password || !name || !otp) {
+      return res
+        .status(400)
+        .json({ message: "please fill all the required fields" });
     }
     const userExists = await User.findOne({ phoneNumber: formatedPhoneNumber });
     if (userExists) {
@@ -97,11 +86,11 @@ module.exports.registerUser = async (req, res) => {
         .status(400)
         .json({ message: "phone number has already been used" });
     }
-    // const otpIsCorrect = await Otp.findOne({ verificationCode: otp });
-    // if (!otpIsCorrect) {
-    //   return res.status(401).json({ message: "Invalid OTP" });
-    // }
-    // await Otp.deleteOne({ verificationCode: otp });
+    const otpIsCorrect = await Otp.findOne({ verificationCode: otp });
+    if (!otpIsCorrect) {
+      return res.status(401).json({ message: "Invalid OTP" });
+    }
+    await Otp.deleteOne({ verificationCode: otp });
     const user = new User({
       name,
       phoneNumber: formatedPhoneNumber,
@@ -191,12 +180,33 @@ module.exports.logoutUser = async (req, res, next) => {
 };
 module.exports.forgotPassword = async (req, res) => {
   try {
-    const { phoneNumber } = req.body;
-    const user = await User.findOne({ phoneNumber });
+    const { phoneNumber } = req.query;
+    if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+      return res
+        .status(400)
+        .json({ message: "Please enter a valid phone number" });
+    }
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
+    const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
     if (!user) {
       return res.status(404).json({ message: "user not found " });
     }
-    res.status(200).json({ user });
+    const otpSent = await sendMessage(formatedPhoneNumber);
+    if (!otpSent.error) {
+      const { code } = otpSent;
+      const otp = new Otp({ verificationCode: code });
+      await otp.save();
+      return res.status(200).json({
+        success: true,
+        message: "SMS sent successfully",
+        phoneNumber: formatedPhoneNumber,
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: "Failed to send verification code via SMS",
+      });
+    }
   } catch (error) {
     res
       .status(500)
@@ -205,25 +215,31 @@ module.exports.forgotPassword = async (req, res) => {
 };
 module.exports.resetPassword = async (req, res) => {
   try {
-    const { phoneNumber, password, verifiedPassword } = req.body;
-    if (!password || !verifiedPassword || !phoneNumber) {
-      return res.status(400).json({ message: "please fill all the fields" });
-    }
-    if (!isValidPhoneNumber(phoneNumber)) {
-      return res
-        .status(400)
-        .json({ message: "please provide a valid phone number" });
+    const { phoneNumber, password, verifiedPassword, otp } = req.body;
+    console.log(req.body);
+    if (!password || !verifiedPassword || !phoneNumber || !otp) {
+      return res.status(400).json({ message: "Please fill all the fields" });
     }
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
     const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
+    const savedOtp = await Otp.findOne({ verificationCode: otp });
+    if (!savedOtp) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid or expired OTP" });
+    }
     if (password !== verifiedPassword) {
       return res.status(400).json({ message: "passwords must match" });
     }
     user.password = password;
     await user.save();
+    await Otp.deleteOne({ verificationCode: otp });
+    res.status(200).json({
+      message: "password reset successful,please login",
+    });
   } catch (error) {
     res
       .status(500)
@@ -316,8 +332,7 @@ module.exports.deposit = async (req, res) => {
   try {
     const { amount } = req.body;
     // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
-    const CALLBACK_URL =
-      " https://b322-196-188-78-148.ngrok.io/api/user/verify";
+    const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
 
     const RETURN_URL = `http://localhost:3000`;
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
@@ -335,7 +350,7 @@ module.exports.deposit = async (req, res) => {
       last_name: "kassa",
       // phone_number: `${user.phoneNumber}`,
       tx_ref: TEXT_REF,
-      callback_url: CALLBACK_URL,
+      callback_url: CALLBACK_URL + TEXT_REF,
       return_url: RETURN_URL,
       customization: {
         title: "deposit",
@@ -358,6 +373,7 @@ module.exports.deposit = async (req, res) => {
 module.exports.verify = async (req, res) => {
   try {
     const txRef = req.body.tx_ref;
+    console.log(req.body);
     // const txRef = req.body.tx_ref;
     const response = await myChapa.verify(txRef);
 

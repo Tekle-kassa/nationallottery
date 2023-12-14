@@ -18,10 +18,11 @@ const {
   resetPassword,
   success,
 } = require("../controllers/user");
+router.get("/sendOtp", sendOtp);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/logout", logoutUser);
-router.post("/forgotPassword", forgotPassword);
+router.get("/forgotPassword", forgotPassword);
 router.put("/resetPassword", resetPassword);
 router.get("/getUser", protect, getUser);
 router.post("/fetan", fetanLotto);
@@ -32,6 +33,6 @@ router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);
 router.post("/verify", verify);
 // router.get("/success", success);
-router.post("/sendOtp", sendOtp);
+
 router.post("/buy", protect, selectTicket);
 module.exports = router;
