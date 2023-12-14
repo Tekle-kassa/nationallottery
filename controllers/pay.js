@@ -68,10 +68,9 @@ module.exports.payLottery = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 module.exports.customerBalance = async (req, res) => {
   const { phoneNumber, amount } = req.body;
-  let id;
+  // let id;
   try {
     const userExist = await User.findById(req.user._id);
     const vendor = await Vendor.findById(req.user._id);
@@ -79,24 +78,25 @@ module.exports.customerBalance = async (req, res) => {
     if (vendor) {
       id = vendor._id;
     }
+
     if (userExist) {
       // phoneNumber = userExist.phoneNumber;
 
-      // const user = await User.findOne({ phoneNumber });
-      // if (!user) {
-      //   user = new User({
-      //     phoneNumber,
-      //   });
+      const user = await User.findOne({ phoneNumber });
+      //   if (!user) {
+      //     user = new User({
+      //       phoneNumber,
+      //     });
 
-      //   await user.save();
-      // }
-      id = userExist._id;
+      //     await user.save();
+      //   }
+      //   id = user_id;
     }
     const customerInfo = {
       amount: amount,
       currency: "ETB",
       email: "tekle@gmail.com",
-      first_name: id,
+      first_name: userExist._id,
       last_name: "kassa",
       phone_number: phoneNumber,
       tx_ref: `lotto${randomNum}`,
@@ -133,6 +133,50 @@ module.exports.addBalance = async (req, res) => {
     }
 
     req.status(200).json(user.balance);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+module.exports.deposit = async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    const customerInfo = {
+      amount: amount,
+      currency: "ETB",
+      email: "tekle@gmail.com",
+      first_name: user._id,
+      last_name: "kassa",
+      phone_number: user.phoneNumber,
+      tx_ref: `lotto${randomNum}`,
+      callback_url: "http://localhost:3000/api/pay/verify",
+      return_url: "http://localhost:3000/",
+      customization: {
+        title: "Lottery",
+        description: "payment for Lottery",
+      },
+    };
+    const response = await myChapa.initialize(customerInfo, { autoRef: true });
+    res.json(response);
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+module.exports.verify = async (req, res) => {
+  try {
+    const { first_name, amount } = req.body;
+    const user = await User.findById(first_name);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.balance += amount;
+    await user.save();
+    res.status(200).json(user);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });

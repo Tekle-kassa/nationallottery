@@ -16,6 +16,7 @@ const {
   getSpecificLottery,
   forgotPassword,
   resetPassword,
+  success,
 } = require("../controllers/user");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
@@ -29,7 +30,8 @@ router.get("/lottery/:id", protect, getSpecificLottery);
 router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);
-router.post("/verify/:tx_ref", protect, verify);
+router.post("/verify", protect, verify);
+// router.get("/success", success);
 router.post("/sendOtp", sendOtp);
 router.post("/buy", protect, selectTicket);
 module.exports = router;
