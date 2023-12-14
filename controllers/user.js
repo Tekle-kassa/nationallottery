@@ -184,7 +184,48 @@ module.exports.logoutUser = async (req, res, next) => {
     message: "successfully logged out",
   });
 };
-module.exports.forgotPassword = module.exports.getUser = async (req, res) => {
+module.exports.forgotPassword = async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    const user = await User.findOne({ phoneNumber });
+    if (!user) {
+      return res.status(404).json({ message: "user not found " });
+    }
+    res.status(200).json({ user });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+};
+module.exports.resetPassword = async (req, res) => {
+  try {
+    const { phoneNumber, password, verifiedPassword } = req.body;
+    if (!password || !verifiedPassword || !phoneNumber) {
+      return res.status(400).json({ message: "please fill all the fields" });
+    }
+    if (!isValidPhoneNumber(phoneNumber)) {
+      return res
+        .status(400)
+        .json({ message: "please provide a valid phone number" });
+    }
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
+    const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
+    if (!user) {
+      return res.status(404).json({ message: "user not found" });
+    }
+    if (password !== verifiedPassword) {
+      return res.status(400).json({ message: "passwords must match" });
+    }
+    user.password = password;
+    await user.save();
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+};
+module.exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -197,6 +238,7 @@ module.exports.forgotPassword = module.exports.getUser = async (req, res) => {
       .json({ message: "internal server error", error: error.message });
   }
 };
+
 module.exports.deposit = async (req, res) => {
   try {
     const { amount } = req.body;
@@ -209,11 +251,12 @@ module.exports.deposit = async (req, res) => {
       amount: amount,
       currency: "ETB",
       email: "kassateklee@gmail.com",
+      // first_name:"tekle,"
       first_name: user._id,
       last_name: "kassa",
       // phone_number: `${user.phoneNumber}`,
       tx_ref: `lotto${Date.now()}`,
-      callback_url: "  https://17be-196-188-78-148.ngrok.io",
+      callback_url: `http://localhost:3000/lotto${Date.now()}`,
       return_url: "http://localhost:3000/",
       customization: {
         title: "deposit",
@@ -235,8 +278,8 @@ module.exports.deposit = async (req, res) => {
 };
 module.exports.verify = async (req, res) => {
   try {
-    // const txRef = req.params.tx_ref;
-    const txRef = req.body.tx_ref;
+    const txRef = req.params.tx_ref;
+    // const txRef = req.body.tx_ref;
     const response = await myChapa.verify(txRef);
 
     if (response.status === "success") {
@@ -282,7 +325,7 @@ module.exports.getLotteries = async (req, res) => {
 module.exports.getSpecificLottery = async (req, res) => {
   try {
     const { id } = req.params;
-    const lottery = await Lottery.findById(id);
+    const lottery = await Lottery.findById(id).populate("prize");
     if (!lottery) {
       return res.status(404).json({ message: "lottery not found" });
     }

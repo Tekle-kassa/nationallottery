@@ -14,10 +14,14 @@ const {
   getLotteries,
   getMyLotteries,
   getSpecificLottery,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/user");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/logout", logoutUser);
+router.post("/forgotPassword", forgotPassword);
+router.put("/resetPassword", resetPassword);
 router.get("/getUser", protect, getUser);
 router.post("/fetan", fetanLotto);
 router.get("/lotteries", getLotteries);
