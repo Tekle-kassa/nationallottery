@@ -184,7 +184,7 @@ module.exports.logoutUser = async (req, res, next) => {
     message: "successfully logged out",
   });
 };
-module.exports.getUser = async (req, res) => {
+module.exports.forgotPassword = module.exports.getUser = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     if (!user) {
@@ -273,6 +273,20 @@ module.exports.getLotteries = async (req, res) => {
       return res.json(404).json({ message: "No Lotteries Found" });
     }
     res.status(200).json(lotteries);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+};
+module.exports.getSpecificLottery = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const lottery = await Lottery.findById(id);
+    if (!lottery) {
+      return res.status(404).json({ message: "lottery not found" });
+    }
+    res.status(200).json(lottery);
   } catch (error) {
     res
       .status(500)

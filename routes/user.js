@@ -13,6 +13,7 @@ const {
   verify,
   getLotteries,
   getMyLotteries,
+  getSpecificLottery,
 } = require("../controllers/user");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
@@ -20,6 +21,7 @@ router.get("/logout", logoutUser);
 router.get("/getUser", protect, getUser);
 router.post("/fetan", fetanLotto);
 router.get("/lotteries", getLotteries);
+router.get("/lottery/:id", protect, getSpecificLottery);
 router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);
