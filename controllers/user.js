@@ -88,13 +88,13 @@ module.exports.registerUser = async (req, res) => {
   try {
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
     if (!formatedPhoneNumber || !password || !name) {
-      res.status(400);
-      throw new Error("please fill all the required fields");
+      res.status(400).json({ message: "please fill all the required fields" });
     }
     const userExists = await User.findOne({ phoneNumber: formatedPhoneNumber });
     if (userExists) {
-      res.status(400);
-      throw new Error("phone number has already been used");
+      return res
+        .status(400)
+        .json({ message: "phone number has already been used" });
     }
     // const otpIsCorrect = await Otp.findOne({ verificationCode: otp });
     // if (!otpIsCorrect) {
@@ -166,7 +166,9 @@ module.exports.loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
   }
 };
 
@@ -190,7 +192,9 @@ module.exports.getUser = async (req, res) => {
     }
     res.status(200).json({ user });
   } catch (error) {
-    res.status(500).json(error);
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
   }
 };
 module.exports.deposit = async (req, res) => {
@@ -253,11 +257,13 @@ module.exports.verify = async (req, res) => {
       });
     } else {
       console.log("Payment verification failed");
-      res.status(400).json(response);
+      return res.status(400).json(response);
     }
   } catch (error) {
     console.error("Error during payment verification:", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: error.message });
   }
 };
 module.exports.getLotteries = async (req, res) => {
@@ -275,12 +281,25 @@ module.exports.getLotteries = async (req, res) => {
 };
 module.exports.getMyLotteries = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("ticketsBought");
+    const user = await User.findById(req.user._id).populate({
+      path: "ticketsBought",
+      populate: { path: "lottery" },
+    });
     if (!user) {
       return res.status(400).json({ message: "user not found" });
     }
-    res.json(user);
-  } catch (error) {}
+    const ticketsToSend = user.ticketsBought.map((ticket) => {
+      return {
+        ticketNumber: ticket.number,
+        lotteryName: ticket.lottery.name,
+      };
+    });
+    res.json(ticketsToSend);
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "internal server error", error: error.message });
+  }
 };
 module.exports.selectTicket = async (req, res) => {
   try {
