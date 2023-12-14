@@ -161,6 +161,7 @@ module.exports.loginUser = async (req, res) => {
     });
     res.status(200).json({
       phoneNumber: formatedPhoneNumber,
+      _id: user._id,
       token,
     });
   } catch (error) {
@@ -229,7 +230,8 @@ module.exports.deposit = async (req, res) => {
 };
 module.exports.verify = async (req, res) => {
   try {
-    const txRef = req.params.tx_ref;
+    // const txRef = req.params.tx_ref;
+    const txRef = req.body.tx_ref;
     const response = await myChapa.verify(txRef);
 
     if (response.status === "success") {
