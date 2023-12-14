@@ -11,12 +11,16 @@ const {
   getUser,
   deposit,
   verify,
+  getLotteries,
+  getMyLotteries,
 } = require("../controllers/user");
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/logout", logoutUser);
 router.get("/getUser", protect, getUser);
 router.post("/fetan", fetanLotto);
+router.get("/lotteries", getLotteries);
+router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);
 router.post("/verify/:tx_ref", protect, verify);

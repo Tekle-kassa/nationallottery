@@ -142,8 +142,9 @@ module.exports.loginUser = async (req, res) => {
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
     const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
     if (!user) {
-      res.status(400);
-      throw new Error("Invalid phone number or password");
+      return res
+        .status(400)
+        .json({ message: "Invalid phone number or password" });
     }
     const passwordIsCorrect = await bcrypt.compare(password, user.password);
     if (!passwordIsCorrect) {
@@ -165,7 +166,7 @@ module.exports.loginUser = async (req, res) => {
       token,
     });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -258,6 +259,28 @@ module.exports.verify = async (req, res) => {
     console.error("Error during payment verification:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+module.exports.getLotteries = async (req, res) => {
+  try {
+    const lotteries = await Lottery.find().populate("prize");
+    if (!lotteries) {
+      return res.json(404).json({ message: "No Lotteries Found" });
+    }
+    res.status(200).json(lotteries);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "internal server error", error: error.message });
+  }
+};
+module.exports.getMyLotteries = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate("ticketsBought");
+    if (!user) {
+      return res.status(400).json({ message: "user not found" });
+    }
+    res.json(user);
+  } catch (error) {}
 };
 module.exports.selectTicket = async (req, res) => {
   try {
