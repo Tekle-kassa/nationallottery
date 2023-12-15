@@ -419,6 +419,7 @@ module.exports.deposit = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 module.exports.createSub = async (req, res) => {
   try {
     //const studentId = req.user._id
@@ -543,10 +544,7 @@ module.exports.getMyLotteries = async (req, res) => {
 module.exports.guest = async (req, res) => {
   try {
     const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
-    const user = await User.findOne({ phoneNumber });
-    // if (user) {
-    //   return res.status(400).json({ message: "please login first" });
-    // }
+    // const user = await User.findOne({ phoneNumber });
     const lottery = await Lottery.findById(lotteryId);
     if (!quantity || quantity <= 0) {
       return res
@@ -574,15 +572,15 @@ module.exports.guest = async (req, res) => {
       });
     }
     const customerInfo = {
-      amount: 50,
+      amount: lottery.price * quantity,
       currency: "ETB",
       email: "6572b7fe1a03c970adb77f29@gmail.com",
       first_name: lotteryId,
       last_name: ticketNumber,
       phone_number: phoneNumber,
-      tx_ref: `lotto${randomNum}`,
-      callback_url: "http://localhost:3000/api/user/ticket",
-      return_url: "http://localhost:3000/",
+      tx_ref: `lotto${Date.now()}`,
+      callback_url: "",
+      return_url: "http://localhost:8080?payment=success",
       customization: {
         title: "Lottery",
         description: "payment for Lottery",
@@ -594,6 +592,37 @@ module.exports.guest = async (req, res) => {
     console.error(error);
     res.status(500).json({ error: "Internal Server Error" });
   }
+};
+module.exports.buyTicket = async (req, res) => {
+  var { first_name, last_name, email, currency, amount, status } = req.body;
+  const lotery = await Lottery.findById(first_name);
+  const user = await User.findOne({ phoneNumber });
+  if (!user) {
+    user = new User({
+      phoneNumber,
+    });
+    await user.save();
+  }
+  const newTickets = [];
+  const quantity = amount / lotery.price;
+  for (let i = 0; i < quantity; i++) {
+    const newTicket = new Ticket({
+      number: last_name,
+      lottery: first_name,
+      user: user._id,
+      purchaseDate: Date.now(),
+      isAvailable: false,
+    });
+    newTickets.push(newTicket);
+    user.ticketsBought.push(newTicket._id);
+    await Ticket.insertMany(newTickets);
+    await user.save();
+  }
+
+  res.json({
+    message: "Payment verification successful",
+    user,
+  });
 };
 module.exports.selectTicket = async (req, res) => {
   try {
