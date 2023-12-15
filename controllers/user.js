@@ -57,7 +57,10 @@ module.exports.sendOtp = async (req, res, next) => {
   const otpSent = await sendMessage(formatedPhoneNumber);
   if (!otpSent.error) {
     const { code } = otpSent;
-    const otp = new Otp({ verificationCode: code });
+    const otp = new Otp({
+      verificationCode: code,
+      phoneNumber: formatedPhoneNumber,
+    });
     await otp.save();
     return res.status(200).json({
       success: true,
@@ -194,7 +197,10 @@ module.exports.forgotPassword = async (req, res) => {
     const otpSent = await sendMessage(formatedPhoneNumber);
     if (!otpSent.error) {
       const { code } = otpSent;
-      const otp = new Otp({ verificationCode: code });
+      const otp = new Otp({
+        verificationCode: code,
+        phoneNumber: formatedPhoneNumber,
+      });
       await otp.save();
       return res.status(200).json({
         success: true,
@@ -213,17 +219,21 @@ module.exports.forgotPassword = async (req, res) => {
       .json({ message: "internal server error", error: error.message });
   }
 };
-module.exports.resetPassword = async (req, res) => {
+
+module.exports.verifyOtp = async (req, res) => {
   try {
-    const { phoneNumber, password, verifiedPassword, otp } = req.body;
+    const { otp, phoneNumber } = req.body;
     console.log(req.body);
-    if (!password || !verifiedPassword || !phoneNumber || !otp) {
-      return res.status(400).json({ message: "Please fill all the fields" });
-    }
+    // const otp = "2337";
+    // const phoneNumber = "0942049329";
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
-    const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
-    if (!user) {
-      return res.status(404).json({ message: "user not found" });
+    if (!phoneNumber || !isValidPhoneNumber(phoneNumber)) {
+      return res
+        .status(400)
+        .json({ message: "Please enter a valid phone number" });
+    }
+    if (!otp) {
+      return res.status(400).json({ message: "Please fill all the fields" });
     }
     const savedOtp = await Otp.findOne({ verificationCode: otp });
     if (!savedOtp) {
@@ -231,12 +241,33 @@ module.exports.resetPassword = async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid or expired OTP" });
     }
+    const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
+    await Otp.deleteOne({ verificationCode: otp });
+    res.status(200).json(user);
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: "Internal server error", error: error.message });
+  }
+};
+module.exports.resetPassword = async (req, res) => {
+  try {
+    const { phoneNumber, password, verifiedPassword } = req.body;
+    console.log(req.body);
+    if (!password || !verifiedPassword || !phoneNumber) {
+      return res.status(400).json({ message: "Please fill all the fields" });
+    }
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
+    const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
+    if (!user) {
+      return res.status(404).json({ message: "user not found" });
+    }
     if (password !== verifiedPassword) {
       return res.status(400).json({ message: "passwords must match" });
     }
     user.password = password;
     await user.save();
-    await Otp.deleteOne({ verificationCode: otp });
     res.status(200).json({
       message: "password reset successful,please login",
     });
@@ -462,6 +493,41 @@ module.exports.getMyLotteries = async (req, res) => {
       .status(400)
       .json({ message: "internal server error", error: error.message });
   }
+};
+module.exports.guest = async (req, res) => {
+  try {
+    const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
+    let user = await User.findOne({ phoneNumber });
+    if (user) {
+      return res.status(400).json({ message: "please login first" });
+    }
+    const lottery = await Lottery.findById(lotteryId);
+    if (!quantity || quantity <= 0) {
+      return res
+        .status(400)
+        .json({ message: "Please provide a valid quantity" });
+    }
+    const selectedTickets = await Ticket.find({
+      number: ticketNumber,
+      lottery: lotteryId,
+    });
+    const count = selectedTickets.length;
+    let maxAvailableTickets = 5;
+    if (lottery.name === "Medebegna") {
+      maxAvailableTickets = 2;
+    }
+    if (count >= maxAvailableTickets) {
+      return res
+        .status(400)
+        .json({ error: "Ticket not available for selection" });
+    }
+    if (maxAvailableTickets - count < quantity) {
+      return res.status(400).json({
+        message: "Not enough available tickets for the requested quantity",
+        available: maxAvailableTickets - count,
+      });
+    }
+  } catch (error) {}
 };
 module.exports.selectTicket = async (req, res) => {
   try {

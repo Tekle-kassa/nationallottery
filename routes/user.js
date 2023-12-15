@@ -17,17 +17,19 @@ const {
   forgotPassword,
   resetPassword,
   success,
+  verifyOtp,
 } = require("../controllers/user");
 router.get("/sendOtp", sendOtp);
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.get("/logout", logoutUser);
 router.get("/forgotPassword", forgotPassword);
+router.post("/verifyOtp", verifyOtp);
 router.put("/resetPassword", resetPassword);
 router.get("/getUser", protect, getUser);
 router.post("/fetan", fetanLotto);
 router.get("/lotteries", getLotteries);
-router.get("/lottery/:id", protect, getSpecificLottery);
+router.get("/lottery/:id", getSpecificLottery);
 router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
 router.post("/deposit", protect, deposit);

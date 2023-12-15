@@ -5,6 +5,9 @@ const otpSchema = new Schema({
   verificationCode: {
     type: String,
   },
+  phoneNUmber: {
+    type: String,
+  },
 });
 
 const Otp = mongoose.model("Otp", otpSchema);
