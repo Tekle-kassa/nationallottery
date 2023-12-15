@@ -309,75 +309,7 @@ module.exports.getUser = async (req, res) => {
       .json({ message: "internal server error", error: error.message });
   }
 };
-// const axios = require("axios");
-// const CHAPA_URL =
-//   process.env.CHAPA_URL || "https://api.chapa.co/v1/transaction/initialize";
-// const CHAPA_AUTH = "CHASECK_TEST-mdEmZgOYeHlwX9Uq58AzPO1uaOSEpDkC";
-// const config = {
-//   headers: {
-//     Authorization: `Bearer ${CHAPA_AUTH}`,
-//   },
-// };
-// module.exports.deposit = async (req, res) => {
-//   try {
-//     const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
-//     const RETURN_URL = `http://localhost:3000`;
-//     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
-//     const { amount } = req.body;
-//     const user = await User.findById(req.user._id);
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
-//     const data = {
-//       amount: amount,
-//       currency: "ETB",
-//       email: "anonymous@gmail.com",
-//       first_name: `${user._id}`,
-//       last_name: "anonymous",
-//       tx_ref: TEXT_REF,
-//       callback_url: CALLBACK_URL + TEXT_REF,
-//       return_url: RETURN_URL,
-//     };
-//     await axios
-//       .post(CHAPA_URL, data, config)
-//       .then((response) => {
-//         res.json({ response: response.data.data.checkout_url, TEXT_REF });
-//       })
-//       .catch(async (err) => {
-//         console.log(err);
-//       });
-//     // res.json( response );
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
 
-// module.exports.verify = async (req, res) => {
-//   try {
-//     const txRef = req.body.tx_ref;
-//     await axios
-//       .get("https://api.chapa.co/v1/transaction/verify/" + txRef, config)
-//       .then(async (response) => {
-//         const { amount, first_name } = response.data.data;
-//         // console.log(response.data.data);
-//         const user = await User.findById(first_name);
-//         if (!user) {
-//           return res.status(404).json({ error: "User not found" });
-//         }
-//         // console.log(user);
-//         user.balance += parseInt(amount);
-//         await user.save();
-//         console.log("Payment was successfully verified");
-//       })
-//       .catch((err) => console.log("Payment can't be verfied", err));
-//   } catch (error) {
-//     console.error("Error during payment verification:", error.message);
-//     res
-//       .status(500)
-//       .json({ message: "Internal Server Error", error: error.message });
-//   }
-// };
 module.exports.deposit = async (req, res) => {
   try {
     const { amount } = req.body;

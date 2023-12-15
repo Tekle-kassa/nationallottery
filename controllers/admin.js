@@ -102,6 +102,7 @@ module.exports.addLotteryInfo = async (req, res) => {
       price,
       rule,
       digit,
+      maxTickets,
     } = req.body;
 
     const lottery = await Lottery.findOne({ name });
@@ -119,6 +120,7 @@ module.exports.addLotteryInfo = async (req, res) => {
       price,
       rule,
       digit,
+      maxTickets,
     });
 
     const saveLottery = await newLottery.save();
@@ -163,8 +165,17 @@ module.exports.getLotteryById = async (req, res) => {
 module.exports.updateLottery = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, startDate, drawDate, status, prize, price, digit, rule } =
-      req.body;
+    const {
+      name,
+      startDate,
+      drawDate,
+      status,
+      prize,
+      price,
+      digit,
+      rule,
+      maxTickets,
+    } = req.body;
     const lotterytoBeUpdated = await Lottery.findById(id).populate("prize");
     // console.log(lottery);
     if (!lotterytoBeUpdated) {
@@ -197,6 +208,9 @@ module.exports.updateLottery = async (req, res) => {
     }
     if (rule) {
       lotterytoBeUpdated.rule = rule;
+    }
+    if (maxTickets) {
+      lotterytoBeUpdated.maxTickets = maxTickets;
     }
     const updatedLottery = await lotterytoBeUpdated.save();
     res
