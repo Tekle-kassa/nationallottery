@@ -524,6 +524,7 @@ module.exports.getMyLotteries = async (req, res) => {
     }
     const lotteriesMap = new Map();
     user.ticketsBought.forEach((ticket) => {
+      console.log(ticket);
       const lotteryName = ticket.lottery.name;
 
       if (!lotteriesMap.has(lotteryName)) {
@@ -538,6 +539,7 @@ module.exports.getMyLotteries = async (req, res) => {
     }
     res.json(lotteriesToSend);
   } catch (error) {
+    console.log(error);
     res
       .status(400)
       .json({ message: "internal server error", error: error.message });
@@ -578,7 +580,7 @@ module.exports.guest = async (req, res) => {
     const customerInfo = {
       amount: lottery.price * quantity,
       currency: "ETB",
-      email: "6572b7fe1a03c970adb77f29@gmail.com",
+      email: `${phoneNumber}@gmail.com`,
       first_name: lotteryId,
       last_name: ticketNumber,
       phone_number: phoneNumber,
@@ -598,9 +600,12 @@ module.exports.guest = async (req, res) => {
   }
 };
 module.exports.buyTicket = async (req, res) => {
-  var { first_name, last_name, email, currency, amount, status } = req.body;
+  var { first_name, last_name, email, currency, amount, status, phone_number } =
+    req.body;
+  // console.log(req.body);
+  const phoneNumber = email.split("@")[0];
   const lotery = await Lottery.findById(first_name);
-  const user = await User.findOne({ phoneNumber });
+  let user = await User.findOne({ phoneNumber });
   if (!user) {
     user = new User({
       phoneNumber,
@@ -617,13 +622,14 @@ module.exports.buyTicket = async (req, res) => {
       purchaseDate: Date.now(),
       isAvailable: false,
     });
+    // console.log(last_name, newTicket);
     newTickets.push(newTicket);
     user.ticketsBought.push(newTicket._id);
-    await Ticket.insertMany(newTickets);
-    await user.save();
-    const smsSent = await sendSms(user.phoneNumber, last_name);
   }
-
+  await Ticket.insertMany(newTickets);
+  await user.save();
+  // console.log(user);
+  const smsSent = await sendSms(user.phoneNumber, last_name);
   res.json({
     message: "Payment verification successful",
     user,
