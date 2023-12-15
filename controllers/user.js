@@ -9,6 +9,8 @@ const Otp = require("../models/otp");
 const Chapa = require("chapa");
 const axios = require("axios").default;
 let myChapa = new Chapa("CHASECK_TEST-mdEmZgOYeHlwX9Uq58AzPO1uaOSEpDkC");
+let myChapa2 = new Chapa("CHASECK_TEST-ChPbA58gx67mTFi1V1vzhNGl9GPf2ArF");
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
@@ -545,9 +547,9 @@ module.exports.guest = async (req, res) => {
   try {
     const { lotteryId, ticketNumber, quantity = 1, phoneNumber } = req.body;
     // const user = await User.findOne({ phoneNumber });
-    console.log(req.body);
+    // console.log(req.body);
     const lottery = await Lottery.findById(lotteryId);
-    console.log(lottery);
+    // console.log(lottery);
     if (!quantity || quantity <= 0) {
       return res
         .status(400)
@@ -588,7 +590,7 @@ module.exports.guest = async (req, res) => {
         description: "payment for Lottery",
       },
     };
-    const response = await myChapa.initialize(customerInfo, { autoRef: true });
+    const response = await myChapa2.initialize(customerInfo, { autoRef: true });
     res.json(response);
   } catch (error) {
     console.error(error);
