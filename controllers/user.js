@@ -8,7 +8,7 @@ const Prize = require("../models/prize");
 const Otp = require("../models/otp");
 const Chapa = require("chapa");
 const axios = require("axios").default;
-let myChapa = new Chapa("CHAPUBK_TEST-Xd9t7qKH33muWMn3zTBkGG1rwa5nfYQQ");
+let myChapa = new Chapa("CHASECK_TEST-mdEmZgOYeHlwX9Uq58AzPO1uaOSEpDkC");
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
