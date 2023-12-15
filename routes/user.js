@@ -18,6 +18,7 @@ const {
   resetPassword,
   success,
   verifyOtp,
+  guest,
 } = require("../controllers/user");
 router.get("/sendOtp", sendOtp);
 router.post("/register", registerUser);
@@ -32,8 +33,9 @@ router.get("/lotteries", getLotteries);
 router.get("/lottery/:id", getSpecificLottery);
 router.get("/myLotteries", protect, getMyLotteries);
 router.post("/ticket", selectTicket);
+router.post("/guest", guest);
 router.post("/deposit", protect, deposit);
-router.post("/verify", verify);
+router.post("/verify/:tx_ref", verify);
 // router.get("/success", success);
 
 router.post("/buy", protect, selectTicket);

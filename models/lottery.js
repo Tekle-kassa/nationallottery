@@ -44,6 +44,10 @@ lotterySchema = new Schema({
   rule: {
     type: String,
   },
+  maxTickets: {
+    type: Number,
+    default: 5,
+  },
 });
 
 const Lottery = mongoose.model("Lottery", lotterySchema);

@@ -8,8 +8,7 @@ const Prize = require("../models/prize");
 const Otp = require("../models/otp");
 const Chapa = require("chapa");
 const axios = require("axios").default;
-let myChapa = new Chapa("CHASECK_TEST-7mSnUUlCknqZrInKDc9QusA7zy7KNONq");
-
+let myChapa = new Chapa("CHAPUBK_TEST-Xd9t7qKH33muWMn3zTBkGG1rwa5nfYQQ");
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: "1d" });
 };
@@ -399,7 +398,7 @@ module.exports.deposit = async (req, res) => {
       last_name: "kassa",
       // phone_number: `${user.phoneNumber}`,
       tx_ref: TEXT_REF,
-      callback_url: CALLBACK_URL + TEXT_REF,
+      callback_url: "",
       return_url: RETURN_URL,
       customization: {
         title: "deposit",
@@ -421,7 +420,7 @@ module.exports.deposit = async (req, res) => {
 };
 module.exports.verify = async (req, res) => {
   try {
-    const txRef = req.body.tx_ref;
+    const txRef = req.params.tx_ref;
     console.log(req.body);
     // const txRef = req.body.tx_ref;
     const response = await myChapa.verify(txRef);
@@ -516,9 +515,9 @@ module.exports.guest = async (req, res) => {
   try {
     const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
     let user = await User.findOne({ phoneNumber });
-    if (user) {
-      return res.status(400).json({ message: "please login first" });
-    }
+    // if (user) {
+    //   return res.status(400).json({ message: "please login first" });
+    // }
     const lottery = await Lottery.findById(lotteryId);
     if (!quantity || quantity <= 0) {
       return res
@@ -545,7 +544,27 @@ module.exports.guest = async (req, res) => {
         available: maxAvailableTickets - count,
       });
     }
-  } catch (error) {}
+    const customerInfo = {
+      amount: 50,
+      currency: "ETB",
+      email: "6572b7fe1a03c970adb77f29@gmail.com",
+      first_name: lotteryId,
+      last_name: ticketNumber,
+      phone_number: phoneNumber,
+      tx_ref: `lotto${randomNum}`,
+      callback_url: "http://localhost:3000/api/user/ticket",
+      return_url: "http://localhost:3000/",
+      customization: {
+        title: "Lottery",
+        description: "payment for Lottery",
+      },
+    };
+    const response = await myChapa.initialize(customerInfo, { autoRef: true });
+    res.json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
 module.exports.selectTicket = async (req, res) => {
   try {
