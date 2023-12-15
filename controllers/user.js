@@ -381,7 +381,7 @@ module.exports.deposit = async (req, res) => {
     const { amount } = req.body;
     // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
     const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
-
+    console.log(amount);
     const RETURN_URL = `http://localhost:3000`;
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
     // console.log(req.body.amount);
@@ -405,6 +405,7 @@ module.exports.deposit = async (req, res) => {
         description: "deposit for purchasing lotteries",
       },
     };
+    // console.log(user);
     const response = await myChapa.initialize(userInfo, { autoRef: true });
     // user.balance += parseInt(amount);
     // await user.save();
@@ -418,6 +419,34 @@ module.exports.deposit = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+module.exports.createSub = async (req, res) => {
+  try {
+    //const studentId = req.user._id
+    var { first_name, last_name, email, currency, amount, status } = req.body;
+    // id = email
+    console.log(req.body);
+    // const txRef = req.body.tx_ref;
+
+    const user = await User.findById(first_name);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.balance += parseInt(amount);
+    console.log(user);
+    await user.save();
+
+    res.json({
+      message: "Payment verification successful",
+      user: { balance: user.balance },
+    });
+  } catch (error) {
+    // console.error(error);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports.verify = async (req, res) => {
   try {
     const txRef = req.params.tx_ref;
