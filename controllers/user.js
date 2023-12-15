@@ -382,7 +382,7 @@ module.exports.deposit = async (req, res) => {
     // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
     const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
     console.log(amount);
-    const RETURN_URL = `http://localhost:3000`;
+    const RETURN_URL = `http://localhost:8080`;
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
     // console.log(req.body.amount);
     const user = await User.findById(req.user._id);
