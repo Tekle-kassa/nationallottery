@@ -543,9 +543,11 @@ module.exports.getMyLotteries = async (req, res) => {
 };
 module.exports.guest = async (req, res) => {
   try {
-    const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
+    const { lotteryId, ticketNumber, quantity = 1, phoneNumber } = req.body;
     // const user = await User.findOne({ phoneNumber });
+    console.log(req.body);
     const lottery = await Lottery.findById(lotteryId);
+    console.log(lottery);
     if (!quantity || quantity <= 0) {
       return res
         .status(400)
@@ -617,6 +619,7 @@ module.exports.buyTicket = async (req, res) => {
     user.ticketsBought.push(newTicket._id);
     await Ticket.insertMany(newTickets);
     await user.save();
+    const smsSent = await sendSms(user.phoneNumber, last_name);
   }
 
   res.json({
