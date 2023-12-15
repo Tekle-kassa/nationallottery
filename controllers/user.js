@@ -382,7 +382,7 @@ module.exports.deposit = async (req, res) => {
     // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
     const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
     console.log(amount);
-    const RETURN_URL = `http://localhost:8080`;
+    const RETURN_URL = `http://localhost:8080?payment=success`;
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
     // console.log(req.body.amount);
     const user = await User.findById(req.user._id);
@@ -462,9 +462,9 @@ module.exports.verify = async (req, res) => {
         return res.status(404).json({ error: "User not found" });
       }
 
-      user.balance += parseInt(amount);
-      console.log(user);
-      await user.save();
+      // user.balance += parseInt(amount);
+      // console.log(user);
+      // await user.save();
 
       console.log("Payment verification successful");
       res.json({
@@ -543,7 +543,7 @@ module.exports.getMyLotteries = async (req, res) => {
 module.exports.guest = async (req, res) => {
   try {
     const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
-    let user = await User.findOne({ phoneNumber });
+    const user = await User.findOne({ phoneNumber });
     // if (user) {
     //   return res.status(400).json({ message: "please login first" });
     // }
