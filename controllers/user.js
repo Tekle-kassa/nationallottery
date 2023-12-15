@@ -18,6 +18,24 @@ const isValidPhoneNumber = (phoneNumber) => {
     /(^\+\s*2\s*5\s*1\s*(9|7)\s*(([0-9]\s*){8}\s*)$)|(^0\s*(9|7)\s*(([0-9]\s*){8})$)/;
   return phoneRegex.test(phoneNumber);
 };
+async function sendSms(phoneNumber, ticketNumber) {
+  try {
+    const geezSMSConfig = {
+      token: "s6Et6bByZckTc0Z00FCV5SO9L44DyHRi",
+    };
+    const config = {
+      method: "get",
+      maxBodyLength: Infinity,
+      url: `https://api.geezsms.com/api/v1/sms/send?token=${geezSMSConfig.token}&phone=${phoneNumber}&msg=your ticket is ${ticketNumber}`,
+      headers: {},
+    };
+    const response = await axios(config);
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw new Error(error.message);
+  }
+}
 async function sendMessage(phoneNumber) {
   try {
     const geezSMSConfig = {
@@ -585,6 +603,8 @@ module.exports.selectTicket = async (req, res) => {
     user.balance -= lottery.price * quantity;
     await Ticket.insertMany(newTickets);
     await user.save();
+    // send sms here
+    const smsSent = await sendSms(user.phoneNumber, ticketNumber);
     res
       .status(200)
       .json({ message: "Ticket selected successfully", newTickets, user });
