@@ -21,7 +21,13 @@ const isValidPhoneNumber = (phoneNumber) => {
 };
 async function sendSms(phoneNumber, ticketNumber, lottery, quantity) {
   try {
-    let x = `ውድ ደንበኛችን የ${lottery.name} ሎተሪን ስለቆረጡ እናመሰግናለን፡፡ የዕጣ ቁጥርዎ ${ticketNumber} ሲሆን ይሀንን እጣ ቁጥር የገዙት ${quantity} ጊዜ ነው፡፡  ደንብና ግዴታዎች ተፈጻሚነት አላቸው፡፡ ለተጨማሪ መረጃ 8989 ላይ ይደውሉ፡፡ መልካም ዕድል! ብሔራዊ ሎተሪ አስተዳደር`;
+    let lotto = lottery;
+    if (lottery === "Gena") {
+      lotto = "ገና";
+    } else if (lottery === "Medebegna") {
+      lotto = "መደበኛ";
+    }
+    let x = `ውድ ደንበኛችን የ${lotto} ሎተሪን ስለቆረጡ እናመሰግናለን፡፡ የዕጣ ቁጥርዎ ${ticketNumber} ሲሆን ይሀንን እጣ ቁጥር የገዙት ${quantity} ጊዜ ነው፡፡  ደንብና ግዴታዎች ተፈጻሚነት አላቸው፡፡ ለተጨማሪ መረጃ 8989 ላይ ይደውሉ፡፡ መልካም ዕድል! ብሔራዊ ሎተሪ አስተዳደር`;
     const geezSMSConfig = {
       token: "s6Et6bByZckTc0Z00FCV5SO9L44DyHRi",
     };
@@ -565,6 +571,7 @@ module.exports.buyTicket = async (req, res) => {
     newTickets.push(newTicket);
     user.ticketsBought.push(newTicket._id);
   }
+  // console.log(lotery);
   await Ticket.insertMany(newTickets);
   await user.save();
   // console.log(user);
@@ -636,7 +643,13 @@ module.exports.selectTicket = async (req, res) => {
     await Ticket.insertMany(newTickets);
     await user.save();
     // send sms here
-    const smsSent = await sendSms(user.phoneNumber, ticketNumber);
+    // const smsSent = await sendSms(user.phoneNumber, ticketNumber);
+    const smsSent = await sendSms(
+      user.phoneNumber,
+      ticketNumber,
+      lottery.name,
+      quantity
+    );
     res
       .status(200)
       .json({ message: "Ticket selected successfully", newTickets, user });
