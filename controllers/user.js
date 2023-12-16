@@ -19,15 +19,16 @@ const isValidPhoneNumber = (phoneNumber) => {
     /(^\+\s*2\s*5\s*1\s*(9|7)\s*(([0-9]\s*){8}\s*)$)|(^0\s*(9|7)\s*(([0-9]\s*){8})$)/;
   return phoneRegex.test(phoneNumber);
 };
-async function sendSms(phoneNumber, ticketNumber) {
+async function sendSms(phoneNumber, ticketNumber, lottery, quantity) {
   try {
+    let x = `ውድ ደንበኛችን የ${lottery.name} ሎተሪን ስለቆረጡ እናመሰግናለን፡፡ የዕጣ ቁጥርዎ ${ticketNumber} ሲሆን ይሀንን እጣ ቁጥር የገዙት ${quantity} ጊዜ ነው፡፡  ደንብና ግዴታዎች ተፈጻሚነት አላቸው፡፡ ለተጨማሪ መረጃ 8989 ላይ ይደውሉ፡፡ መልካም ዕድል! ብሔራዊ ሎተሪ አስተዳደር`;
     const geezSMSConfig = {
       token: "s6Et6bByZckTc0Z00FCV5SO9L44DyHRi",
     };
     const config = {
       method: "get",
       maxBodyLength: Infinity,
-      url: `https://api.geezsms.com/api/v1/sms/send?token=${geezSMSConfig.token}&phone=${phoneNumber}&msg=your ticket is ${ticketNumber}`,
+      url: `https://api.geezsms.com/api/v1/sms/send?token=${geezSMSConfig.token}&phone=${phoneNumber}&msg=${x}`,
       headers: {},
     };
     const response = await axios(config);
@@ -511,6 +512,7 @@ module.exports.guest = async (req, res) => {
         available: maxAvailableTickets - count,
       });
     }
+
     const RETURN_URL =
       "https://national-lottery-web-app.vercel.app?payment=success";
     const customerInfo = {
@@ -566,7 +568,12 @@ module.exports.buyTicket = async (req, res) => {
   await Ticket.insertMany(newTickets);
   await user.save();
   // console.log(user);
-  const smsSent = await sendSms(user.phoneNumber, last_name);
+  const smsSent = await sendSms(
+    user.phoneNumber,
+    last_name,
+    lotery.name,
+    quantity
+  );
   res.json({
     message: "Payment verification successful",
     user,
