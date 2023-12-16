@@ -315,8 +315,10 @@ module.exports.deposit = async (req, res) => {
     const { amount } = req.body;
     // const CALLBACK_URL = "http://localhost:3000/api/user/verify";
     const CALLBACK_URL = "http://localhost:3000/api/user/verify/";
-    console.log(amount);
-    const RETURN_URL = `http://localhost:8080?payment=success`;
+    // console.log(amount);
+    // const RETURN_URL = `http://localhost:8080?payment=success`;
+    const RETURN_URL =
+      "https://national-lottery-web-app.vercel.app?payment=success";
     const TEXT_REF = "tx-myecommerce12345-" + Date.now();
     // console.log(req.body.amount);
     const user = await User.findById(req.user._id);
@@ -509,6 +511,8 @@ module.exports.guest = async (req, res) => {
         available: maxAvailableTickets - count,
       });
     }
+    const RETURN_URL =
+      "https://national-lottery-web-app.vercel.app?payment=success";
     const customerInfo = {
       amount: lottery.price * quantity,
       currency: "ETB",
@@ -518,7 +522,8 @@ module.exports.guest = async (req, res) => {
       phone_number: phoneNumber,
       tx_ref: `lotto${Date.now()}`,
       callback_url: "",
-      return_url: "http://localhost:8080?payment=success",
+      // return_url: "http://localhost:8080?payment=success",
+      return_url: RETURN_URL,
       customization: {
         title: "Lottery",
         description: "payment for Lottery",
