@@ -104,7 +104,7 @@ module.exports.registerUser = async (req, res) => {
   const { name, phoneNumber, password, otp } = req.body;
   try {
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
-    if (!formatedPhoneNumber || !password || !name || !otp) {
+    if (!formatedPhoneNumber || !password || !otp) {
       return res
         .status(400)
         .json({ message: "please fill all the required fields" });
@@ -489,6 +489,9 @@ module.exports.getMyLotteries = async (req, res) => {
 module.exports.guest = async (req, res) => {
   try {
     const { lotteryId, ticketNumber, quantity = 1, phoneNumber } = req.body;
+    if (!isValidPhoneNumber(phoneNumber)) {
+      return res.status(400).json({ message: "invalid phone number" });
+    }
     // const user = await User.findOne({ phoneNumber });
     // console.log(req.body);
     const lottery = await Lottery.findById(lotteryId);
@@ -549,11 +552,12 @@ module.exports.buyTicket = async (req, res) => {
     req.body;
   // console.log(req.body);
   const phoneNumber = email.split("@")[0];
+  const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
   const lotery = await Lottery.findById(first_name);
-  let user = await User.findOne({ phoneNumber });
+  let user = await User.findOne({ phoneNumber: formatedPhoneNumber });
   if (!user) {
     user = new User({
-      phoneNumber,
+      phoneNumber: formatedPhoneNumber,
     });
     await user.save();
   }
