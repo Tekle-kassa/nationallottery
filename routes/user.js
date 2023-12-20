@@ -21,6 +21,7 @@ const {
   guest,
   createSub,
   buyTicket,
+  generateTicket,
 } = require("../controllers/user");
 router.get("/sendOtp", sendOtp);
 router.post("/register", registerUser);
@@ -43,4 +44,5 @@ router.post("/sub", createSub);
 
 router.post("/buy", protect, selectTicket);
 router.post("/guestLottery", buyTicket);
+router.get("/generateTicket/:lotteryId", generateTicket);
 module.exports = router;
