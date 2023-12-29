@@ -513,7 +513,10 @@ module.exports.guest = async (req, res) => {
     if (count >= maxAvailableTickets) {
       return res
         .status(400)
-        .json({ message: "Ticket not available for selection" });
+        .json({
+          message: "Ticket not available for selection",
+          available: maxAvailableTickets - count,
+        });
     }
     if (maxAvailableTickets - count < quantity) {
       return res.status(400).json({
@@ -622,9 +625,10 @@ module.exports.selectTicket = async (req, res) => {
       maxAvailableTickets = 2;
     }
     if (count >= maxAvailableTickets) {
-      return res
-        .status(400)
-        .json({ message: "Ticket not available for selection" });
+      return res.status(400).json({
+        message: "Ticket not available for selection",
+        available: maxAvailableTickets - count,
+      });
     }
     if (maxAvailableTickets - count < quantity) {
       return res.status(400).json({
