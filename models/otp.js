@@ -5,7 +5,7 @@ const otpSchema = new Schema({
   verificationCode: {
     type: String,
   },
-  phoneNUmber: {
+  phoneNumber: {
     type: String,
   },
 });
