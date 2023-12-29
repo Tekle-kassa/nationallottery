@@ -663,7 +663,53 @@ module.exports.selectTicket = async (req, res) => {
     res.status(500).json({ error: error.message, message: error.message });
   }
 };
+module.exports.generateTicket = async (req, res) => {
+  try {
+    // const { lotteryId, ticketNumber, quantity, digits } = req.body;
+    const { lotteryId } = req.params;
 
+    const lottery = await Lottery.findById(lotteryId);
+    if (!lottery) {
+      return res.status(400).json({ error: "Couldn't find lottery" });
+    }
+    function generateRandomNumber() {
+      return Math.floor(Math.random() * 10);
+    }
+
+    let selectedTickets;
+    do {
+      lottoNumber = "";
+      for (let i = 0; i < lottery.digit; i++) {
+        lottoNumber += generateRandomNumber().toString();
+      }
+      selectedTickets = await Ticket.find({
+        number: lottoNumber,
+        lottery: lotteryId,
+      });
+      const count = selectedTickets.length;
+
+      let maxAvailableTickets = 5;
+      if (lottery.name === "Medebegna") {
+        maxAvailableTickets = 2;
+      }
+      if (maxAvailableTickets - count > 0) {
+        res.status(200).json({
+          message: `The available tickets for this ticket is ${
+            maxAvailableTickets - count
+          }`,
+          available: maxAvailableTickets - count,
+          ticketNumber: lottoNumber,
+        });
+        break;
+      }
+    } while (true);
+
+    // res.status(200).json({ message: "Ticket selected successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
+};
 module.exports.fetanLotto = async (req, res) => {
   try {
     const { lotteryId } = req.body;
