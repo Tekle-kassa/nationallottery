@@ -488,7 +488,7 @@ module.exports.getMyLotteries = async (req, res) => {
 };
 module.exports.guest = async (req, res) => {
   try {
-    const { lotteryId, ticketNumber, quantity = 1, phoneNumber } = req.body;
+    const { lotteryId, ticketNumber, quantity, phoneNumber } = req.body;
     if (!isValidPhoneNumber(phoneNumber)) {
       return res.status(400).json({ message: "invalid phone number" });
     }
@@ -513,7 +513,7 @@ module.exports.guest = async (req, res) => {
     if (count >= maxAvailableTickets) {
       return res
         .status(400)
-        .json({ error: "Ticket not available for selection" });
+        .json({ message: "Ticket not available for selection" });
     }
     if (maxAvailableTickets - count < quantity) {
       return res.status(400).json({
@@ -544,7 +544,7 @@ module.exports.guest = async (req, res) => {
     res.json(response);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json({ error: error, message: "Internal Server Error" });
   }
 };
 module.exports.buyTicket = async (req, res) => {
@@ -554,10 +554,11 @@ module.exports.buyTicket = async (req, res) => {
   const phoneNumber = email.split("@")[0];
   const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
   const lotery = await Lottery.findById(first_name);
-  let user = await User.findOne({ phoneNumber: formatedPhoneNumber });
+  let user = await User.findOne({ phoneNumber });
+  console.log(user);
   if (!user) {
     user = new User({
-      phoneNumber: formatedPhoneNumber,
+      phoneNumber,
     });
     await user.save();
   }
@@ -623,7 +624,7 @@ module.exports.selectTicket = async (req, res) => {
     if (count >= maxAvailableTickets) {
       return res
         .status(400)
-        .json({ error: "Ticket not available for selection" });
+        .json({ message: "Ticket not available for selection" });
     }
     if (maxAvailableTickets - count < quantity) {
       return res.status(400).json({
@@ -659,7 +660,7 @@ module.exports.selectTicket = async (req, res) => {
       .json({ message: "Ticket selected successfully", newTickets, user });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, message: error.message });
   }
 };
 
