@@ -110,7 +110,7 @@ module.exports.registerUser = async (req, res) => {
         .json({ message: "please fill all the required fields" });
     }
     const userExists = await User.findOne({ phoneNumber: formatedPhoneNumber });
-    if (userExists) {
+    if (userExists && userExists.password) {
       return res
         .status(400)
         .json({ message: "phone number has already been used" });
@@ -121,13 +121,19 @@ module.exports.registerUser = async (req, res) => {
     }
     await Otp.deleteMany({ phoneNumber: formatedPhoneNumber });
     // await Otp.deleteOne({ verificationCode: otp });
-    const user = new User({
-      name,
-      phoneNumber: formatedPhoneNumber,
-      password,
-    });
-
-    await user.save();
+    let user;
+    if (userExists) {
+      userExists.password = password;
+      await userExists.save();
+      user = userExists;
+    } else {
+      user = new User({
+        name,
+        phoneNumber: formatedPhoneNumber,
+        password,
+      });
+      await user.save();
+    }
     const token = generateToken(user._id);
     res.cookie("token", token, {
       path: "/",
