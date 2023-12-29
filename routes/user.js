@@ -22,6 +22,7 @@ const {
   createSub,
   buyTicket,
   generateTicket,
+  ticketAvailable,
 } = require("../controllers/user");
 router.get("/sendOtp", sendOtp);
 router.post("/register", registerUser);
@@ -40,6 +41,7 @@ router.post("/guest", guest);
 router.post("/deposit", protect, deposit);
 router.post("/verify/:tx_ref", verify);
 router.post("/sub", createSub);
+router.post("/isTicketAvailable/:lotteryId", protect, ticketAvailable);
 // router.get("/success", success);
 
 router.post("/buy", protect, selectTicket);

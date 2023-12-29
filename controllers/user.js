@@ -119,7 +119,8 @@ module.exports.registerUser = async (req, res) => {
     if (!otpIsCorrect) {
       return res.status(401).json({ message: "Invalid OTP" });
     }
-    await Otp.deleteOne({ verificationCode: otp });
+    await Otp.deleteMany({ phoneNumber: formatedPhoneNumber });
+    // await Otp.deleteOne({ verificationCode: otp });
     const user = new User({
       name,
       phoneNumber: formatedPhoneNumber,
@@ -249,7 +250,7 @@ module.exports.forgotPassword = async (req, res) => {
 module.exports.verifyOtp = async (req, res) => {
   try {
     const { otp, phoneNumber } = req.body;
-    console.log(req.body);
+    // console.log(req.body);
     // const otp = "2337";
     // const phoneNumber = "0942049329";
     const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
@@ -268,7 +269,9 @@ module.exports.verifyOtp = async (req, res) => {
         .json({ success: false, message: "Invalid or expired OTP" });
     }
     const user = await User.findOne({ phoneNumber: formatedPhoneNumber });
-    await Otp.deleteOne({ verificationCode: otp });
+    // const savedOtps = await Otp.find({ phoneNumber: formatedPhoneNumber });
+    await Otp.deleteMany({ phoneNumber: formatedPhoneNumber });
+    // await Otp.deleteOne({ verificationCode: otp });
     res.status(200).json(user);
   } catch (error) {
     console.log(error);
@@ -432,7 +435,7 @@ module.exports.getLotteries = async (req, res) => {
     if (!lotteries) {
       return res.json(404).json({ message: "No Lotteries Found" });
     }
-    res.status(200).json(lotteries);
+    res.status(200).json({ lotteries });
   } catch (error) {
     res
       .status(500)
@@ -492,6 +495,7 @@ module.exports.guest = async (req, res) => {
     if (!isValidPhoneNumber(phoneNumber)) {
       return res.status(400).json({ message: "invalid phone number" });
     }
+    const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
     // const user = await User.findOne({ phoneNumber });
     // console.log(req.body);
     const lottery = await Lottery.findById(lotteryId);
@@ -511,12 +515,10 @@ module.exports.guest = async (req, res) => {
       maxAvailableTickets = 2;
     }
     if (count >= maxAvailableTickets) {
-      return res
-        .status(400)
-        .json({
-          message: "Ticket not available for selection",
-          available: maxAvailableTickets - count,
-        });
+      return res.status(400).json({
+        message: "Ticket not available for selection",
+        available: maxAvailableTickets - count,
+      });
     }
     if (maxAvailableTickets - count < quantity) {
       return res.status(400).json({
@@ -530,7 +532,7 @@ module.exports.guest = async (req, res) => {
     const customerInfo = {
       amount: lottery.price * quantity,
       currency: "ETB",
-      email: `${phoneNumber}@gmail.com`,
+      email: `${formatedPhoneNumber}@gmail.com`,
       first_name: lotteryId,
       last_name: ticketNumber,
       phone_number: phoneNumber,
@@ -557,11 +559,11 @@ module.exports.buyTicket = async (req, res) => {
   const phoneNumber = email.split("@")[0];
   const formatedPhoneNumber = phoneNumberFormatter(phoneNumber);
   const lotery = await Lottery.findById(first_name);
-  let user = await User.findOne({ phoneNumber });
-  console.log(user);
+  let user = await User.findOne({ phoneNumber: formatedPhoneNumber });
+  // console.log(user);
   if (!user) {
     user = new User({
-      phoneNumber,
+      phoneNumber: formatedPhoneNumber,
     });
     await user.save();
   }
@@ -593,6 +595,42 @@ module.exports.buyTicket = async (req, res) => {
     message: "Payment verification successful",
     user,
   });
+};
+module.exports.ticketAvailable = async (req, res) => {
+  try {
+    const { lotteryId } = req.params;
+    const { ticketNumber } = req.body;
+    const lottery = await Lottery.findById(lotteryId);
+    if (!lottery) {
+      return res.status(400).json({ message: "Couldn't find lottery" });
+    }
+    const selectedTickets = await Ticket.find({
+      number: ticketNumber,
+      lottery: lotteryId,
+    });
+    const count = selectedTickets.length;
+    let maxAvailableTickets = 5;
+    if (lottery.name === "Medebegna") {
+      maxAvailableTickets = 2;
+    }
+    if (count >= maxAvailableTickets) {
+      return res.status(400).json({
+        message: "Ticket not available for selection",
+        available: maxAvailableTickets - count,
+      });
+    }
+    const available = maxAvailableTickets - count;
+    res.status(200).json({ available });
+    // if (maxAvailableTickets - count < quantity) {
+    //   return res.status(400).json({
+    //     message: "Not enough available tickets for the requested quantity",
+    //     available: maxAvailableTickets - count,
+    //   });
+    // }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message, message: error.message });
+  }
 };
 module.exports.selectTicket = async (req, res) => {
   try {
