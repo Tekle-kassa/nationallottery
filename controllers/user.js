@@ -75,7 +75,7 @@ module.exports.sendOtp = async (req, res, next) => {
   const userExists = await User.findOne({
     phoneNumber: formatedPhoneNumber,
   });
-  if (userExists) {
+  if (userExists && userExists.password) {
     return res
       .status(400)
       .json({ message: "Phone number has already been used" });
